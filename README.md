@@ -1,4 +1,4 @@
-1.Project Title: "Ridiculous Rules People Actually Follow"
+## 1.Project Title: "Ridiculous Rules People Actually Follow"
 
 2.Project Overview:
 

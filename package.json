@@ -5,7 +5,10 @@
   "scripts": {
     "start": "node server.js",
     "build": "npm install",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "postinstall": "npm install"
+  },
+  "engines": {
+    "node": "18.x"
   },
   "repository": {
     "type": "git",
@@ -14,14 +17,11 @@
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/kishore33x/S86_RidiculousRules_People_Actually_Follow/issues"
+    "url": "https://github.com/kishore33x/S86_RidiculousRules_People_Actually_Follow.git"
   },
-  "homepage": "https://github.com/kishore33x/S86_RidiculousRules_People_Actually_Follow#readme",
+  "homepage": "https://github.com/kishore33x/S86_RidiculousRules_People_Actually_Follow.git",
   "keywords": [],
   "dependencies": {
     "express": "^4.21.2"
-  },
-  "engines": {
-    "node": ">=18.0.0"
   }
 }

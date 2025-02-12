@@ -8,9 +8,8 @@
     "postinstall": "npm install"
   },
   "engines": {
-  "node": "18.x",
-  "npm": "9.x"
-
+    "node": "18.x",
+    "npm": "9.x"
   },
   "repository": {
     "type": "git",

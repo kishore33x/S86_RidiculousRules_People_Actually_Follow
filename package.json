@@ -1,19 +1,22 @@
 {
   "name": "s86_ridiculousrules_people_actually_follow",
   "version": "1.0.0",
-  "description": "2. Project Overview:",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "build": "npm ci",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
-  "engines": {
-    "node": ">=18.0.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kishore33x/S86_RidiculousRules_People_Actually_Follow.git"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kishore33x/S86_RidiculousRules_People_Actually_Follow.git"
+  },
+  "homepage": "https://github.com/kishore33x/S86_RidiculousRules_People_Actually_Follow.git",
+  "keywords": [],
   "dependencies": {
     "express": "^4.21.2"
   }

@@ -3,7 +3,7 @@ require('dotenv').config(); // Load environment variables
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
-const Payment = require(path.join(__dirname, 'models', 'payment'));
+const User = require(path.join(__dirname, 'models', 'user')); // Import User model
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,31 +26,50 @@ app.get('/ping', (req, res) => {
     res.json({ message: 'pong' });
 });
 
-// Fetch all payments (GET)
-app.get('/payments', async (req, res) => {
+// Fetch all users (GET)
+app.get('/users', async (req, res) => {
     try {
-        const payments = await Payment.find();
-        res.json(payments);
+        const users = await User.find();
+        res.json(users);
     } catch (error) {
-        res.status(500).json({ error: '❌ Failed to fetch payments', details: error.message });
+        res.status(500).json({ error: '❌ Failed to fetch users', details: error.message });
     }
 });
 
-// Seed Route (POST) - Deletes existing payments and inserts new ones
+// Create a new user (POST)
+app.post('/users', async (req, res) => {
+    try {
+        const { username, email, password, role } = req.body;
+
+        // Check if the user already exists
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ error: '❌ Username already exists' });
+        }
+
+        const newUser = new User({ username, email, password, role });
+        await newUser.save();
+        res.status(201).json({ message: '✅ User created successfully!', user: newUser });
+    } catch (error) {
+        res.status(500).json({ error: '❌ Failed to create user', details: error.message });
+    }
+});
+
+// Seed Route (POST) - Adds sample user data
 app.post('/seed', async (req, res) => {
     try {
-        // Delete all existing payments before inserting new ones
-        await Payment.deleteMany({});
+        // Delete all existing users before inserting new ones
+        await User.deleteMany({});
 
-        const samplePayments = [
-            { order: new mongoose.Types.ObjectId(), amount: 100, method: 'credit card', status: 'completed' },
-            { order: new mongoose.Types.ObjectId(), amount: 50, method: 'paypal', status: 'pending' }
+        const sampleUsers = [
+            { username: 'john_doe', email: 'john.doe@example.com', password: 'password123', role: 'user' },
+            { username: 'admin_user', email: 'admin@example.com', password: 'adminpassword', role: 'admin' }
         ];
 
-        await Payment.insertMany(samplePayments);
-        res.json({ message: '✅ Sample payments inserted successfully!' });
+        await User.insertMany(sampleUsers);
+        res.json({ message: '✅ Sample users inserted successfully!' });
     } catch (error) {
-        res.status(500).json({ error: '❌ Failed to insert sample payments', details: error.message });
+        res.status(500).json({ error: '❌ Failed to insert sample users', details: error.message });
     }
 });
 

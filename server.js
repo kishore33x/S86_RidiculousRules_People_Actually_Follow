@@ -9,19 +9,31 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 
+// Database Connection Status Variable
+let dbStatus = "⏳ Connecting...";
+
 // Connect to MongoDB
 mongoose.connect(MONGO_URI)
-    .then(() => console.log('✅ Connected to MongoDB Atlas'))
-    .catch(err => console.error('❌ MongoDB Connection Error:', err));
+    .then(() => {
+        console.log('✅ Connected to MongoDB Atlas');
+        dbStatus = "✅ Database connected";
+    })
+    .catch(err => {
+        console.error('❌ MongoDB Connection Error:', err);
+        dbStatus = "❌ Database connection failed";
+    });
 
 // Middleware
 app.use(express.json());
 
 // Routes
+
+// Home Route - Displays Database Connection Status
 app.get('/', (req, res) => {
-    res.send('Server is running! Welcome to the API.');
+    res.json({ message: dbStatus });
 });
 
+// Ping Route
 app.get('/ping', (req, res) => {
     res.json({ message: 'pong' });
 });
@@ -36,15 +48,18 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// Create a new user (POST)
+// Create a new user (POST) with duplicate handling
 app.post('/users', async (req, res) => {
     try {
         const { username, email, password, role } = req.body;
 
-        // Check if the user already exists
-        const existingUser = await User.findOne({ username });
+        // Check if the username or email already exists
+        const existingUser = await User.findOne({ $or: [{ username }, { email }] });
         if (existingUser) {
-            return res.status(400).json({ error: '❌ Username already exists' });
+            return res.status(400).json({ 
+                error: '❌ User already exists', 
+                details: existingUser.username === username ? 'Username is taken' : 'Email is already registered'
+            });
         }
 
         const newUser = new User({ username, email, password, role });

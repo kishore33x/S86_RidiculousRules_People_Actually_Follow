@@ -38,4 +38,7 @@ The app has a voting system where users can upvote or downvote the rules they fi
 
 This project is both funny and relatable and everyone has encountered a ridiculous rule at some point. It provides a great way to practice user authentication, database management, API handling, and deployment while keeping things engaging. Plus, it might just make people appreciate the normal rules in their lives.
 
-379/5000 words
+## 🌐 Deployed Link
+
+[Cloudflare Worker API Deployed](https://asap-project.redranger637.workers.dev)
+

@@ -26,6 +26,8 @@
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "mongoose": "^8.10.1"
+    "hono": "^4.7.4",
+    "mongoose": "^8.10.1",
+    "wrangler": "^4.0.0"
   }
 }

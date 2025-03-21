@@ -2,8 +2,11 @@ require('dotenv').config(); // Load environment variables
 
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const path = require('path');
+
 const User = require(path.join(__dirname, 'models', 'user')); // Import User model
+const Entity = require(path.join(__dirname, 'models', 'entity')); // Import Entity model
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,17 +19,25 @@ mongoose.connect(MONGO_URI)
 
 // Middleware
 app.use(express.json());
+app.use(cors()); // Enable CORS for frontend integration
 
-// Routes
+// Logging middleware (for debugging)
+app.use((req, res, next) => {
+    console.log(`📢 ${req.method} request to ${req.url}`);
+    next();
+});
+
+// ========================== HOME ROUTES ==========================
 app.get('/', (req, res) => {
-    res.send('Server is running! Welcome to the API.');
+    res.send('🚀 Server is running! Welcome to the API.');
 });
 
 app.get('/ping', (req, res) => {
     res.json({ message: 'pong' });
 });
 
-// Fetch all users (GET)
+// ========================== USERS ROUTES ==========================
+// Fetch all users
 app.get('/users', async (req, res) => {
     try {
         const users = await User.find();
@@ -36,7 +47,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// Create a new user (POST)
+// Create a new user
 app.post('/users', async (req, res) => {
     try {
         const { username, email, password, role } = req.body;
@@ -55,10 +66,44 @@ app.post('/users', async (req, res) => {
     }
 });
 
-// Seed Route (POST) - Adds sample user data
+// ========================== ENTITIES ROUTES ==========================
+// Fetch all entities
+app.get('/entities', async (req, res) => {
+    try {
+        const entities = await Entity.find();
+        res.json(entities);
+    } catch (error) {
+        res.status(500).json({ error: '❌ Failed to fetch entities', details: error.message });
+    }
+});
+
+// Create a new entity
+app.post('/entities', async (req, res) => {
+    try {
+        const { name, description } = req.body;
+        const newEntity = new Entity({ name, description });
+        await newEntity.save();
+        res.status(201).json({ message: '✅ Entity created successfully!', entity: newEntity });
+    } catch (error) {
+        res.status(500).json({ error: '❌ Failed to create entity', details: error.message });
+    }
+});
+
+// Delete an entity by ID
+app.delete('/entities/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await Entity.findByIdAndDelete(id);
+        res.json({ message: '✅ Entity deleted successfully!' });
+    } catch (error) {
+        res.status(500).json({ error: '❌ Failed to delete entity', details: error.message });
+    }
+});
+
+// ========================== SEED ROUTE ==========================
+// Seed Route - Adds sample user data
 app.post('/seed', async (req, res) => {
     try {
-        // Delete all existing users before inserting new ones
         await User.deleteMany({});
 
         const sampleUsers = [
@@ -71,6 +116,11 @@ app.post('/seed', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: '❌ Failed to insert sample users', details: error.message });
     }
+});
+
+// ========================== ERROR HANDLING ==========================
+app.use((req, res) => {
+    res.status(404).json({ error: '❌ Route not found' });
 });
 
 // Start Server

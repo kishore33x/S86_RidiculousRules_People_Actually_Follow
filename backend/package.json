@@ -23,12 +23,14 @@
   "homepage": "https://github.com/kishore33x/S86_RidiculousRules_People_Actually_Follow.git",
   "keywords": [],
   "dependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "hono": "^4.7.4",
     "mongoose": "^8.10.1",
+    "react-router-dom": "^7.4.0",
     "wrangler": "^4.0.0"
   },
   "devDependencies": {

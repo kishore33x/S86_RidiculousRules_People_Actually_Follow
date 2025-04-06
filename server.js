@@ -9,7 +9,7 @@ const User = require(path.join(__dirname, 'models', 'user')); // Import User mod
 const Entity = require(path.join(__dirname, 'models', 'entity')); // Import Entity model
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000; // Ensure it's 5000 for frontend integration
 const MONGO_URI = process.env.MONGO_URI;
 
 // Connect to MongoDB
@@ -27,48 +27,14 @@ app.use((req, res, next) => {
     next();
 });
 
-// ========================== HOME ROUTES ==========================
+// ========================== HOME ROUTE ==========================
 app.get('/', (req, res) => {
     res.send('🚀 Server is running! Welcome to the API.');
 });
 
-app.get('/ping', (req, res) => {
-    res.json({ message: 'pong' });
-});
-
-// ========================== USERS ROUTES ==========================
-// Fetch all users
-app.get('/users', async (req, res) => {
-    try {
-        const users = await User.find();
-        res.json(users);
-    } catch (error) {
-        res.status(500).json({ error: '❌ Failed to fetch users', details: error.message });
-    }
-});
-
-// Create a new user
-app.post('/users', async (req, res) => {
-    try {
-        const { username, email, password, role } = req.body;
-
-        // Check if the user already exists
-        const existingUser = await User.findOne({ username });
-        if (existingUser) {
-            return res.status(400).json({ error: '❌ Username already exists' });
-        }
-
-        const newUser = new User({ username, email, password, role });
-        await newUser.save();
-        res.status(201).json({ message: '✅ User created successfully!', user: newUser });
-    } catch (error) {
-        res.status(500).json({ error: '❌ Failed to create user', details: error.message });
-    }
-});
-
 // ========================== ENTITIES ROUTES ==========================
 // Fetch all entities
-app.get('/entities', async (req, res) => {
+app.get('/api/entities', async (req, res) => {
     try {
         const entities = await Entity.find();
         res.json(entities);
@@ -78,9 +44,12 @@ app.get('/entities', async (req, res) => {
 });
 
 // Create a new entity
-app.post('/entities', async (req, res) => {
+app.post('/api/entities', async (req, res) => {
     try {
         const { name, description } = req.body;
+        if (!name || !description) {
+            return res.status(400).json({ error: '❌ Name and Description are required' });
+        }
         const newEntity = new Entity({ name, description });
         await newEntity.save();
         res.status(201).json({ message: '✅ Entity created successfully!', entity: newEntity });
@@ -89,32 +58,35 @@ app.post('/entities', async (req, res) => {
     }
 });
 
-// Delete an entity by ID
-app.delete('/entities/:id', async (req, res) => {
+// Update an entity by ID
+app.put('/api/entities/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        await Entity.findByIdAndDelete(id);
-        res.json({ message: '✅ Entity deleted successfully!' });
+        const { name, description } = req.body;
+        if (!name || !description) {
+            return res.status(400).json({ error: '❌ Name and Description are required' });
+        }
+        const updatedEntity = await Entity.findByIdAndUpdate(id, { name, description }, { new: true });
+        if (!updatedEntity) {
+            return res.status(404).json({ error: '❌ Entity not found' });
+        }
+        res.json({ message: '✅ Entity updated successfully!', entity: updatedEntity });
     } catch (error) {
-        res.status(500).json({ error: '❌ Failed to delete entity', details: error.message });
+        res.status(500).json({ error: '❌ Failed to update entity', details: error.message });
     }
 });
 
-// ========================== SEED ROUTE ==========================
-// Seed Route - Adds sample user data
-app.post('/seed', async (req, res) => {
+// Delete an entity by ID
+app.delete('/api/entities/:id', async (req, res) => {
     try {
-        await User.deleteMany({});
-
-        const sampleUsers = [
-            { username: 'john_doe', email: 'john.doe@example.com', password: 'password123', role: 'user' },
-            { username: 'admin_user', email: 'admin@example.com', password: 'adminpassword', role: 'admin' }
-        ];
-
-        await User.insertMany(sampleUsers);
-        res.json({ message: '✅ Sample users inserted successfully!' });
+        const { id } = req.params;
+        const deletedEntity = await Entity.findByIdAndDelete(id);
+        if (!deletedEntity) {
+            return res.status(404).json({ error: '❌ Entity not found' });
+        }
+        res.json({ message: '✅ Entity deleted successfully!' });
     } catch (error) {
-        res.status(500).json({ error: '❌ Failed to insert sample users', details: error.message });
+        res.status(500).json({ error: '❌ Failed to delete entity', details: error.message });
     }
 });
 

@@ -11,34 +11,48 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: "http://localhost:5173" }));
 
-// MongoDB Schema
+// MongoDB Schemas
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+});
+
+const User = mongoose.model("User", userSchema);
+
 const entitySchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   category: { type: String, required: true },
+  created_by: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 });
 
 const Entity = mongoose.model("Entity", entitySchema);
 
 // Routes
+
+// Get all entities or filter by user
 app.get("/api/entities", async (req, res) => {
   try {
-    const entities = await Entity.find();
+    const query = {};
+    if (req.query.user_id) {
+      query.created_by = req.query.user_id;
+    }
+    const entities = await Entity.find(query).populate("created_by");
     res.json(entities);
   } catch (err) {
     res.status(500).json({ message: "Error fetching entities", error: err });
   }
 });
 
+// Create a new entity
 app.post("/api/entities", async (req, res) => {
   try {
-    const { title, description, category } = req.body;
+    const { title, description, category, created_by } = req.body;
 
-    if (!title || !description || !category) {
-      return res.status(400).json({ message: "All fields are required" });
+    if (!title || !description || !category || !created_by) {
+      return res.status(400).json({ message: "All fields including created_by are required" });
     }
 
-    const newEntity = new Entity({ title, description, category });
+    const newEntity = new Entity({ title, description, category, created_by });
     await newEntity.save();
     res.status(201).json(newEntity);
   } catch (err) {
@@ -46,6 +60,7 @@ app.post("/api/entities", async (req, res) => {
   }
 });
 
+// Delete an entity
 app.delete("/api/entities/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -59,6 +74,7 @@ app.delete("/api/entities/:id", async (req, res) => {
   }
 });
 
+// Update an entity
 app.put("/api/entities/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -71,6 +87,16 @@ app.put("/api/entities/:id", async (req, res) => {
     res.json(updatedEntity);
   } catch (err) {
     res.status(500).json({ message: "Error updating entity", error: err });
+  }
+});
+
+// Get all users (for dropdown)
+app.get("/api/users", async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching users", error: err });
   }
 });
 

@@ -2,15 +2,36 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const Entity = require("./models/Entity");
+const User = require("./models/User"); // ✅ Add this
 const { body, validationResult } = require("express-validator");
 
 // GET all entities
 router.get("/entities", async (req, res) => {
   try {
-    const entities = await Entity.find();
+    const entities = await Entity.find().populate("created_by"); // ✅ show user info
     res.json(entities);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch entities" });
+  }
+});
+
+// ✅ NEW: Get all users (for dropdown)
+router.get("/users", async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+// ✅ NEW: Get entities by user
+router.get("/entities/by-user/:userId", async (req, res) => {
+  try {
+    const entities = await Entity.find({ created_by: req.params.userId });
+    res.json(entities);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch entities by user" });
   }
 });
 
@@ -20,7 +41,8 @@ router.post(
   [
     body("name").notEmpty().withMessage("Name is required"),
     body("description").notEmpty().withMessage("Description is required"),
-    body("category").optional().notEmpty().withMessage("Category must not be empty if provided")
+    body("category").optional().notEmpty().withMessage("Category must not be empty if provided"),
+    body("created_by").notEmpty().withMessage("created_by is required") // ✅ New validation
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -29,8 +51,15 @@ router.post(
     }
 
     try {
-      const { name, description, category } = req.body;
-      const newEntity = new Entity({ name, description, category });
+      const { name, description, category, created_by } = req.body;
+
+      // ✅ Optional: Verify the user exists
+      const userExists = await User.findById(created_by);
+      if (!userExists) {
+        return res.status(400).json({ error: "User not found" });
+      }
+
+      const newEntity = new Entity({ name, description, category, created_by });
       await newEntity.save();
       res.status(201).json(newEntity);
     } catch (err) {

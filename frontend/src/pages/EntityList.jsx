@@ -3,12 +3,28 @@ import { useNavigate } from "react-router-dom";
 
 const EntityList = () => {
   const [entities, setEntities] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const fetchEntities = () => {
-    fetch("http://localhost:3000/api/entities")
+  const fetchUsers = () => {
+    fetch("http://localhost:3000/api/users")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch users");
+        return res.json();
+      })
+      .then((data) => setUsers(data))
+      .catch((err) => console.error("User fetch error:", err));
+  };
+
+  const fetchEntities = (userId = "") => {
+    const url = userId
+      ? `http://localhost:3000/api/entities?user_id=${userId}`
+      : "http://localhost:3000/api/entities";
+
+    fetch(url)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch entities");
         return res.json();
@@ -24,8 +40,13 @@ const EntityList = () => {
   };
 
   useEffect(() => {
+    fetchUsers();
     fetchEntities();
   }, []);
+
+  useEffect(() => {
+    fetchEntities(selectedUserId);
+  }, [selectedUserId]);
 
   const handleDelete = async (id) => {
     try {
@@ -52,6 +73,24 @@ const EntityList = () => {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">Entity List</h2>
+
+      {/* Filter Dropdown */}
+      <label className="block mb-2 font-medium text-gray-700">
+        Filter by User:
+      </label>
+      <select
+        value={selectedUserId}
+        onChange={(e) => setSelectedUserId(e.target.value)}
+        className="mb-6 p-2 border rounded w-full max-w-sm"
+      >
+        <option value="">-- All Users --</option>
+        {users.map((user) => (
+          <option key={user._id} value={user._id}>
+            {user.name}
+          </option>
+        ))}
+      </select>
+
       {entities.length === 0 ? (
         <p>No entities found.</p>
       ) : (
@@ -62,7 +101,10 @@ const EntityList = () => {
               className="border p-3 rounded-md flex justify-between items-center"
             >
               <div>
-                <strong>{entity.name}</strong> - {entity.description}
+                <strong>{entity.title}</strong> - {entity.description}
+                <p className="text-sm text-gray-500">
+                  Created by: {entity.created_by?.name || "Unknown"}
+                </p>
               </div>
               <div className="space-x-2">
                 <button

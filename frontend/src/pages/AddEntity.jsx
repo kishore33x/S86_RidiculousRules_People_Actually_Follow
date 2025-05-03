@@ -1,10 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function AddEntity() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [createdBy, setCreatedBy] = useState("");
+  const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("http://localhost:3000/api/users")
+      .then((res) => res.json())
+      .then((data) => setUsers(data))
+      .catch((err) => {
+        console.error("Error fetching users:", err);
+        setError("Failed to load users.");
+      });
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,7 +26,7 @@ function AddEntity() {
       const response = await fetch("http://localhost:3000/api/entities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, category }),
+        body: JSON.stringify({ title, description, category, created_by: createdBy }),
       });
 
       const result = await response.json();
@@ -25,6 +37,7 @@ function AddEntity() {
         setTitle("");
         setDescription("");
         setCategory("");
+        setCreatedBy("");
       } else {
         setError(result.error || "Failed to add entity.");
       }
@@ -49,13 +62,16 @@ function AddEntity() {
           required
           className="border px-3 py-2 rounded"
         />
+
         <textarea
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           required
+          rows={1}
           className="border px-3 py-2 rounded"
         />
+
         <input
           type="text"
           placeholder="Category"
@@ -64,6 +80,21 @@ function AddEntity() {
           required
           className="border px-3 py-2 rounded"
         />
+
+        <select
+          value={createdBy}
+          onChange={(e) => setCreatedBy(e.target.value)}
+          required
+          className="border px-3 py-2 rounded"
+        >
+          <option value="">-- Select Creator --</option>
+          {users.map((user) => (
+            <option key={user._id} value={user._id}>
+              {user.username}
+            </option>
+          ))}
+        </select>
+
         <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
           Submit
         </button>

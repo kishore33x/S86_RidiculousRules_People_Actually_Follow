@@ -26,7 +26,12 @@ function AddEntity() {
       const response = await fetch("http://localhost:3000/api/entities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, category, created_by: createdBy }),
+        body: JSON.stringify({
+          title,
+          description,
+          category,
+          created_by: createdBy,
+        }),
       });
 
       const result = await response.json();
@@ -89,8 +94,8 @@ function AddEntity() {
         >
           <option value="">-- Select Creator --</option>
           {users.map((user) => (
-            <option key={user._id} value={user._id}>
-              {user.username}
+            <option key={user.id} value={user.id}>
+              {user.name}
             </option>
           ))}
         </select>

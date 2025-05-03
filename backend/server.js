@@ -1,87 +1,121 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const mysql = require("mysql2/promise");
 
 dotenv.config();
 
 const app = express();
-
-// Middleware
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: "http://localhost:5173" })); // Adjust frontend origin if needed
 
-// MongoDB Schema
-const entitySchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  category: { type: String, required: true },
-});
+let db;
 
-const Entity = mongoose.model("Entity", entitySchema);
+// MySQL Connection
+async function connectToDB() {
+  try {
+    db = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+    });
+    console.log("✅ Connected to MySQL");
+  } catch (err) {
+    console.error("❌ MySQL connection error:", err);
+    process.exit(1);
+  }
+}
+connectToDB();
 
 // Routes
+
+// Get all users
+app.get("/api/users", async (req, res) => {
+  try {
+    const [users] = await db.query("SELECT * FROM users");
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching users", error: err });
+  }
+});
+
+// Get all entities or filter by user
 app.get("/api/entities", async (req, res) => {
   try {
-    const entities = await Entity.find();
-    res.json(entities);
+    const { user_id } = req.query;
+    let query =
+      "SELECT e.*, u.name as created_by_name FROM entities e JOIN users u ON e.created_by = u.id";
+    const values = [];
+
+    if (user_id) {
+      query += " WHERE e.created_by = ?";
+      values.push(user_id);
+    }
+
+    const [rows] = await db.query(query, values);
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ message: "Error fetching entities", error: err });
   }
 });
 
+// Create a new entity
 app.post("/api/entities", async (req, res) => {
   try {
-    const { title, description, category } = req.body;
-
-    if (!title || !description || !category) {
-      return res.status(400).json({ message: "All fields are required" });
+    const { title, description, category, created_by } = req.body;
+    if (!title || !description || !category || !created_by) {
+      return res.status(400).json({ message: "All fields including created_by are required" });
     }
 
-    const newEntity = new Entity({ title, description, category });
-    await newEntity.save();
-    res.status(201).json(newEntity);
+    const [result] = await db.query(
+      "INSERT INTO entities (title, description, category, created_by) VALUES (?, ?, ?, ?)",
+      [title, description, category, created_by]
+    );
+
+    res.status(201).json({ id: result.insertId, title, description, category, created_by });
   } catch (err) {
     res.status(500).json({ message: "Failed to add entity", error: err });
   }
 });
 
+// Delete an entity
 app.delete("/api/entities/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const deleted = await Entity.findByIdAndDelete(id);
-    if (!deleted) {
+    const [result] = await db.query("DELETE FROM entities WHERE id = ?", [id]);
+
+    if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Entity not found" });
     }
+
     res.json({ message: "Entity deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: "Error deleting entity", error: err });
   }
 });
 
+// Update an entity
 app.put("/api/entities/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedEntity = await Entity.findByIdAndUpdate(id, req.body, {
-      new: true,
-    });
-    if (!updatedEntity) {
+    const { title, description, category } = req.body;
+
+    const [result] = await db.query(
+      "UPDATE entities SET title = ?, description = ?, category = ? WHERE id = ?",
+      [title, description, category, id]
+    );
+
+    if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Entity not found" });
     }
-    res.json(updatedEntity);
+
+    res.json({ message: "Entity updated successfully" });
   } catch (err) {
     res.status(500).json({ message: "Error updating entity", error: err });
   }
 });
 
-// MongoDB Connection
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
-
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

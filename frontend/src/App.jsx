@@ -4,6 +4,7 @@ import UserCard from "./components/UserCard";
 import AddEntity from "./pages/AddEntity";
 import EntityList from "./pages/EntityList";
 import UpdateEntity from "./pages/UpdateEntity";
+import Auth from "./pages/Auth"; // Import Auth page for login/logout
 
 function Home() {
   return <h2 className="text-xl font-bold text-center">Welcome to the ASAP Project</h2>;
@@ -11,7 +12,7 @@ function Home() {
 
 function App() {
   const [users, setUsers] = useState([]);
-  const [error, setError] = useState(null);  // State to handle error messages
+  const [error, setError] = useState(null); // State to handle error messages
 
   // Fetch users from the backend
   const fetchUsers = async () => {
@@ -37,7 +38,7 @@ function App() {
     <Router>
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
         <h1 className="text-3xl font-bold mb-6 text-gray-800">User Information</h1>
-        
+
         {/* Error handling display */}
         {error ? (
           <div className="text-red-500 mb-4">
@@ -58,6 +59,7 @@ function App() {
           <Link to="/" className="text-blue-600 hover:underline">Home</Link>
           <Link to="/add-entity" className="text-blue-600 hover:underline">Add Entity</Link>
           <Link to="/entities" className="text-blue-600 hover:underline">Entity List</Link>
+          <Link to="/auth" className="text-blue-600 hover:underline">Login / Logout</Link> {/* Auth link */}
         </nav>
 
         {/* Routing */}
@@ -67,6 +69,7 @@ function App() {
             <Route path="/add-entity" element={<AddEntity users={users} />} />
             <Route path="/entities" element={<EntityList />} />
             <Route path="/edit-entity/:id" element={<UpdateEntity />} />
+            <Route path="/auth" element={<Auth />} /> {/* Auth route for login/logout */}
             <Route path="*" element={<h2 className="text-red-500">404 - Page Not Found</h2>} />
           </Routes>
         </div>

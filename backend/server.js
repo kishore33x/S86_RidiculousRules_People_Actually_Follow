@@ -2,12 +2,17 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const mysql = require("mysql2/promise");
+const cookieParser = require("cookie-parser");
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:5173" })); // Adjust frontend origin if needed
+app.use(cookieParser());
+app.use(cors({ 
+  origin: "http://localhost:5173",
+  credentials: true // allow frontend to send/receive cookies
+}));
 
 let db;
 
@@ -28,7 +33,7 @@ async function connectToDB() {
 }
 connectToDB();
 
-// Routes
+// =================== ROUTES =================== //
 
 // Get all users
 app.get("/api/users", async (req, res) => {
@@ -116,6 +121,40 @@ app.put("/api/entities/:id", async (req, res) => {
   }
 });
 
-// Start server
+// =================== AUTH ROUTES =================== //
+
+// Login - Set username in cookie
+app.post("/api/auth/login", (req, res) => {
+  const { username } = req.body;
+
+  if (!username) {
+    return res.status(400).json({ message: "Username is required" });
+  }
+
+  res.cookie("username", username, {
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+  });
+  res.json({ message: "Login successful", username });
+});
+
+// Logout - Clear cookie
+app.post("/api/auth/logout", (req, res) => {
+  res.clearCookie("username");
+  res.json({ message: "Logout successful" });
+});
+
+// Check session
+app.get("/api/auth/check", (req, res) => {
+  const { username } = req.cookies;
+  if (username) {
+    res.json({ loggedIn: true, username });
+  } else {
+    res.json({ loggedIn: false });
+  }
+});
+
+// =================== START SERVER =================== //
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

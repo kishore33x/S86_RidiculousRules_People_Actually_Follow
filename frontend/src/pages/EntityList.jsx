@@ -56,8 +56,8 @@ const EntityList = () => {
 
       if (!res.ok) throw new Error("Failed to delete entity");
 
-      // Remove from local state
-      setEntities(entities.filter((e) => e._id !== id));
+      // Remove from local state using correct ID field
+      setEntities((prev) => prev.filter((e) => e.id !== id));
     } catch (err) {
       setError(err.message);
     }
@@ -85,7 +85,7 @@ const EntityList = () => {
       >
         <option value="">-- All Users --</option>
         {users.map((user) => (
-          <option key={user._id} value={user._id}>
+          <option key={user.id} value={user.id}>
             {user.name}
           </option>
         ))}
@@ -97,24 +97,24 @@ const EntityList = () => {
         <ul className="list-disc pl-5 space-y-2">
           {entities.map((entity) => (
             <li
-              key={entity._id}
+              key={entity.id}
               className="border p-3 rounded-md flex justify-between items-center"
             >
               <div>
                 <strong>{entity.title}</strong> - {entity.description}
                 <p className="text-sm text-gray-500">
-                  Created by: {entity.created_by?.name || "Unknown"}
+                  Created by: {entity.created_by_name || "Unknown"}
                 </p>
               </div>
               <div className="space-x-2">
                 <button
-                  onClick={() => handleEdit(entity._id)}
+                  onClick={() => handleEdit(entity.id)}
                   className="bg-yellow-400 px-2 py-1 rounded text-white"
                 >
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(entity._id)}
+                  onClick={() => handleDelete(entity.id)}
                   className="bg-red-500 px-2 py-1 rounded text-white"
                 >
                   Delete

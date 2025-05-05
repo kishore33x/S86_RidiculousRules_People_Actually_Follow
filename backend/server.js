@@ -125,7 +125,7 @@ app.put("/api/entities/:id", async (req, res) => {
 
     res.json({ message: "Entity updated successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Error updating entity", error: err.message });
+    res.status(500).json({ message: "Error updating the entity", error: err.message });
   }
 });
 
